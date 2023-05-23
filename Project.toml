@@ -1,6 +1,22 @@
 name = "dynamic"
-[compat]
-julia = "1.9.0"
-DrWatson = "2.12.5"
+
 [deps]
+ActiveContours = "2a096b4a-7755-4b95-b585-0f276b139faf"
+CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
+DICOM = "a26e6606-dd52-5f6a-a97f-4f611373d757"
+DICOMUtils = "d427e4c1-f2bb-45be-a498-7217d8b6de98"
 DrWatson = "634d3b9d-ee7a-5ddf-bec9-22491ea816e1"
+Images = "916415d5-f1e6-5110-898d-aaa5f9f070e0"
+Interpolations = "a98d9a8b-a2ab-59e6-89dd-64a1c18fca59"
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+MeshViz = "9ecf9c4f-6e5a-4b5e-83ae-06f2c7a661d8"
+Meshes = "eacbb407-ea5a-433e-ab97-5258b1ca43fa"
+OrthancTools = "d6a53a69-57dd-4bf1-83cc-71c4a7042fcf"
+PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
+Revise = "295af30f-e4ad-537b-8983-00126c2a3abe"
+StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
+Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d"
+
+[compat]
+DrWatson = "2.12.5"
+julia = "1.9.0"

@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.25
+# v0.19.26
 
 using Markdown
 using InteractiveUtils
@@ -73,7 +73,7 @@ function download_info(acc, ser, inst, save_folder_path)
 		
 		inputs = [
 			md""" $(acc): $(
-				Child(TextField(default="2475"))
+				Child(TextField(default="2751"))
 			)""",
 			md""" $(ser): $(
 				Child(TextField(default="2"))

@@ -24,7 +24,7 @@ using DrWatson
 # ╔═╡ f6750b60-00c9-4f89-bc20-0276a2d6ab96
 # ╠═╡ show_logs = false
 begin
-	using Revise, PlutoUI, DICOM, CairoMakie, LinearAlgebra, Images, StatsBase, Unitful, Meshes, Interpolations, MeshViz
+	using Revise, PlutoUI, DICOM, CairoMakie, LinearAlgebra, Images, StatsBase, Unitful, Meshes, Interpolations, StaticArrays
 	using DICOMUtils, ActiveContours, OrthancTools
 end
 
@@ -457,16 +457,24 @@ mpr = [offset_interpolate(mpr_itp, plane, i, j, k) for i in -r:r, j in -r:r, k i
 # ╔═╡ b53a9ab0-38e3-4144-990a-55f1f5cdd33d
 heatmap(mpr[:, :, f], colormap=:grays)
 
+# ╔═╡ b5783227-5b17-4659-9415-44fe63900b9f
+begin
+	sums = []
+	for z in axes(mpr, 3)
+		push!(sums, sum(mpr[:, :, z]))
+	end
+end
+
+# ╔═╡ 99e5f475-6e51-463b-863b-40beb338e0ce
+findall(x -> x > 0, sums)
+
 # ╔═╡ 17277b11-1c96-4ed4-9acb-be25403fe2aa
 md"""
 ## Cavity centerpoints
 """
 
-# ╔═╡ 7d8ab876-fe0a-4abe-8790-9f02be5e157b
-centroids[3]
-
 # ╔═╡ 5bfbe465-2753-4054-b038-eca14e70c089
-mpr_slice = mpr[:, :, 161];
+mpr_slice = mpr[:, :, div(size(mpr, 3), 2)];
 
 # ╔═╡ 9fb78b86-c9ea-4247-8827-374ecdf1a771
 thresh = 200
@@ -513,17 +521,8 @@ begin
 	centroids_b = Int.(round.(component_centroids(label_components(bool_arr_b))[2]))
 end
 
-# ╔═╡ c0b40d91-d9fa-44e6-8f90-26a2a14a0bab
-box_a[2]
-
-# ╔═╡ 18430fe7-5612-43a0-8ae1-fb240f97c269
-box_a[2][1]
-
 # ╔═╡ 565ebd37-cd13-49ad-88ef-e3b9d0de3bec
-centers_a, centers_b = [centroids_a..., centroids[3]], [centroids_b..., centroids[3]]
-
-# ╔═╡ 35f9fea2-d84e-496d-b433-cd4aaebac40c
-pt_a, pt_b = Meshes.Point(centers_a), Meshes.Point(centers_b)
+centers_a, centers_b = [centroids_a..., div(size(mpr, 3), 2)], [centroids_b..., div(size(mpr, 3), 2)]
 
 # ╔═╡ 6483fd22-acdb-4325-8d67-bd54c08c9a27
 let
@@ -545,17 +544,9 @@ md"""
 ## Cavity cylinders
 """
 
-# ╔═╡ 7f90ed50-be16-4e1a-a2fb-b3ac2707302e
-begin
-	# Define the points and the radius
-	pt1 = [284.0, 204.0, 158.0]
-	pt2 = [196.0, 214.0, 158.0]
-	radius = 5.0
-end
-
 # ╔═╡ 649f943d-8838-4258-a108-4de678561d83
-# Define a function to determine if a point is inside the cylinder
-function in_cylinder(pt, pt1, pt2, radius)
+# Modify the in_cylinder function to accept Static Vectors
+function _in_cylinder(pt::SVector{3, Int}, pt1::SVector{3, Float64}, pt2::SVector{3, Float64}, radius)
     v = pt2 - pt1
     w = pt - pt1
 
@@ -577,28 +568,42 @@ function in_cylinder(pt, pt1, pt2, radius)
 end
 
 # ╔═╡ 2e72c9bb-e41c-493f-b62f-9cc60531382a
-function create_cylinder(array, pt1, pt2, radius)
-	# Initialize the 3D array
-	cylinder = zeros(Int, size(mpr)...)
-	# Iterate over the 3D array
-	for k in axes(cylinder, 3)
-	    for j in axes(cylinder, 2)
-	        for i in axes(cylinder, 1)
-	            # Check if the current point is inside the cylinder
-	            if in_cylinder([i, j, k], pt1, pt2, radius)
-	                cylinder[i, j, k] = 1
-	            end
-	        end
-	    end
-	end
-	return cylinder
+function create_cylinder(array, pt1, pt2, radius, offset)
+    # Convert the points to static arrays
+    pt1 = SVector{3, Float64}(pt1)
+    pt2 = SVector{3, Float64}(pt2)
+
+    # Compute the unit vector in the direction from pt1 to pt2
+    direction = normalize(pt2 - pt1)
+
+    # Adjust the endpoints of the cylinder by the offset
+    pt1 = pt1 - offset * direction
+    pt2 = pt2 + offset * direction
+
+    # Initialize the 3D array
+    cylinder = zeros(Int, size(array)...)
+    # Iterate over the 3D array
+    for k in axes(cylinder, 3)
+        for j in axes(cylinder, 2)
+            for i in axes(cylinder, 1)
+                # Create a static vector for the current point
+                pt = SVector{3, Int}(i, j, k)
+
+                # Check if the current point is inside the cylinder
+                if _in_cylinder(pt, pt1, pt2, radius)
+                    cylinder[i, j, k] = 1
+                end
+            end
+        end
+    end
+    return cylinder
 end
 
 # ╔═╡ 6b1ee364-7611-4fde-9354-aeee659a127f
-cylinder = create_cylinder(mpr, centers_a, centers_b, 5)
+cylinder = create_cylinder(mpr, centers_a, centers_b, 12, -25);
 
 # ╔═╡ eae6cdb3-9d6a-4c7a-8d64-0f7a0832ae2c
-@bind z PlutoUI.Slider(axes(mpr, 3), default=centroids[3], show_value=true)
+@bind z PlutoUI.Slider(axes(mpr, 3), default=div(size(mpr, 3), 2), show_value=true)
 
 # ╔═╡ b5b42c05-cc36-4c17-b64f-1fed5a83a6ef
 let
@@ -672,21 +677,18 @@ end
 # ╠═83a525a1-1ec5-4174-adc7-b19a2890c37b
 # ╟─8f6a2277-504d-4009-ac15-cca75b1e6575
 # ╟─b53a9ab0-38e3-4144-990a-55f1f5cdd33d
+# ╠═b5783227-5b17-4659-9415-44fe63900b9f
+# ╠═99e5f475-6e51-463b-863b-40beb338e0ce
 # ╟─17277b11-1c96-4ed4-9acb-be25403fe2aa
-# ╠═7d8ab876-fe0a-4abe-8790-9f02be5e157b
 # ╠═5bfbe465-2753-4054-b038-eca14e70c089
 # ╠═9fb78b86-c9ea-4247-8827-374ecdf1a771
 # ╠═73c2b825-9de4-4559-98e1-81eba0f57af0
 # ╠═db855edd-2f3e-42b4-b8c9-64e949669716
 # ╠═b85e535c-d2dd-498a-9bfa-c8ac3965167f
 # ╠═a4d0e49a-a962-42d8-a278-32fea583281c
-# ╠═c0b40d91-d9fa-44e6-8f90-26a2a14a0bab
-# ╠═18430fe7-5612-43a0-8ae1-fb240f97c269
 # ╠═565ebd37-cd13-49ad-88ef-e3b9d0de3bec
-# ╠═35f9fea2-d84e-496d-b433-cd4aaebac40c
 # ╟─6483fd22-acdb-4325-8d67-bd54c08c9a27
 # ╟─200c67b9-bff2-456c-9b74-0ca1c31ee964
-# ╠═7f90ed50-be16-4e1a-a2fb-b3ac2707302e
 # ╠═649f943d-8838-4258-a108-4de678561d83
 # ╠═2e72c9bb-e41c-493f-b62f-9cc60531382a
 # ╠═6b1ee364-7611-4fde-9354-aeee659a127f

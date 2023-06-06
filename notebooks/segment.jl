@@ -76,7 +76,7 @@ function download_info(acc, ser, inst, save_folder_path)
 				Child(TextField(default="2751"))
 			)""",
 			md""" $(ser): $(
-				Child(TextField(default="2"))
+				Child(TextField(default="5"))
 			)""",
 			md""" $(inst): $(
 				Child(TextField(default="1"))
@@ -274,7 +274,7 @@ end
 
 # ╔═╡ b1f2ab09-7fd4-4057-9873-fba70ee4f326
 begin
-	heart_mask2, centroids = mask_heart(dcm_arr, 130, 70)
+	heart_mask2, centroids = mask_heart(dcm_arr, 130, 90)
 	idxs2 = findall(isone, heart_mask2)
 	idxs2 = getindex.(idxs2, [1 2])
 end;
@@ -462,8 +462,11 @@ md"""
 ## Cavity centerpoints
 """
 
+# ╔═╡ 7d8ab876-fe0a-4abe-8790-9f02be5e157b
+centroids[3]
+
 # ╔═╡ 5bfbe465-2753-4054-b038-eca14e70c089
-mpr_slice = mpr[:, :, centroids[3]];
+mpr_slice = mpr[:, :, 161];
 
 # ╔═╡ 9fb78b86-c9ea-4247-8827-374ecdf1a771
 thresh = 200
@@ -480,11 +483,11 @@ begin
 	counts2 = countmap(cc_labels2[cc_labels2 .!= 0])
 	
 	# # Find the value with the most occurrences
-	most_common_value_a, most_common_value_b, most_common_value_c, _ = sort(collect(pairs(counts2)), by=x->x[2], rev=true)
+	most_common_value_a, most_common_value_b = sort(collect(pairs(counts2)), by=x->x[2], rev=true)
 end
 
 # ╔═╡ b85e535c-d2dd-498a-9bfa-c8ac3965167f
-most_common_value_a, most_common_value_b, most_common_value_c
+most_common_value_a, most_common_value_b
 
 # ╔═╡ a4d0e49a-a962-42d8-a278-32fea583281c
 begin
@@ -508,20 +511,7 @@ begin
 		bool_arr_b[i] = 1
 	end
 	centroids_b = Int.(round.(component_centroids(label_components(bool_arr_b))[2]))
-
-	# # Find the indices of the most common value in the original array
-	most_common_indices_c = findall(cc_labels2 .== most_common_value_c[1])
-
-	# Create boolean array from new cartesian indices
-	bool_arr_c= zeros(size(mpr_slice))
-	for i in most_common_indices_c
-		bool_arr_c[i] = 1
-	end
-	centroids_c = Int.(round.(component_centroids(label_components(bool_arr_c))[2]))
 end
-
-# ╔═╡ 4121b935-7b01-4176-9cb9-115e61e401e5
-heatmap(label_components(bool_arr_a))
 
 # ╔═╡ c0b40d91-d9fa-44e6-8f90-26a2a14a0bab
 box_a[2]
@@ -530,10 +520,10 @@ box_a[2]
 box_a[2][1]
 
 # ╔═╡ 565ebd37-cd13-49ad-88ef-e3b9d0de3bec
-centers_a, centers_b, centers_c = [centroids_a..., centroids[3]], [centroids_b..., centroids[3]], [centroids_c..., centroids[3]]
+centers_a, centers_b = [centroids_a..., centroids[3]], [centroids_b..., centroids[3]]
 
 # ╔═╡ 35f9fea2-d84e-496d-b433-cd4aaebac40c
-pt_a, pt_b, pt_c = Meshes.Point(centers_a), Meshes.Point(centers_b), Meshes.Point(centers_c)
+pt_a, pt_b = Meshes.Point(centers_a), Meshes.Point(centers_b)
 
 # ╔═╡ 6483fd22-acdb-4325-8d67-bd54c08c9a27
 let
@@ -542,11 +532,10 @@ let
 
 	ax = CairoMakie.Axis(f[1, 1])
 	heatmap!(mpr_slice; colormap=:grays)
-	scatter!(box_a[2][1], markersize=msize, color=:red)
-	scatter!(box_a[2][2], markersize=msize, color=:red)
+	# scatter!(box_a[2][1], markersize=msize, color=:red)
+	# scatter!(box_a[2][2], markersize=msize, color=:red)
 	scatter!(centroids_a, markersize=msize, color=:purple)
 	scatter!(centroids_b, markersize=msize, color=:blue)
-	scatter!(centroids_c, markersize=msize, color=:green)
 
 	f
 end
@@ -556,20 +545,72 @@ md"""
 ## Cavity cylinders
 """
 
-# ╔═╡ 17e65e3a-5a10-4004-ab11-4018167db3e6
+# ╔═╡ 7f90ed50-be16-4e1a-a2fb-b3ac2707302e
 begin
-	vec_a = pt_a - pt_c
-	plane_a = Meshes.Plane(pt_a, vec_a)
-
-	vec_c = pt_c - pt_a
-	plane_c = Meshes.Plane(pt_c, vec_c)
+	# Define the points and the radius
+	pt1 = [284.0, 204.0, 158.0]
+	pt2 = [196.0, 214.0, 158.0]
+	radius = 5.0
 end
 
-# ╔═╡ f7e370da-7542-4277-84a5-a9c64efaf27b
-cyl = Cylinder(10.0, plane_a, plane_c)
+# ╔═╡ 649f943d-8838-4258-a108-4de678561d83
+# Define a function to determine if a point is inside the cylinder
+function in_cylinder(pt, pt1, pt2, radius)
+    v = pt2 - pt1
+    w = pt - pt1
 
-# ╔═╡ 51e62cb9-a957-4c1b-83d8-7ed7b0cc87b9
-viz(cyl)
+    # Compute the dot product
+    c1 = dot(w, v)
+    if c1 <= 0
+        return norm(w) <= radius
+    end
+
+    c2 = dot(v, v)
+    if c2 <= c1
+        return norm(pt - pt2) <= radius
+    end
+
+    # Compute the perpendicular distance
+    b = c1 / c2
+    pb = pt1 + b * v
+    return norm(pt - pb) <= radius
+end
+
+# ╔═╡ 2e72c9bb-e41c-493f-b62f-9cc60531382a
+function create_cylinder(array, pt1, pt2, radius)
+	# Initialize the 3D array
+	cylinder = zeros(Int, size(mpr)...)
+	# Iterate over the 3D array
+	for k in axes(cylinder, 3)
+	    for j in axes(cylinder, 2)
+	        for i in axes(cylinder, 1)
+	            # Check if the current point is inside the cylinder
+	            if in_cylinder([i, j, k], pt1, pt2, radius)
+	                cylinder[i, j, k] = 1
+	            end
+	        end
+	    end
+	end
+	return cylinder
+end
+
+# ╔═╡ 6b1ee364-7611-4fde-9354-aeee659a127f
+cylinder = create_cylinder(mpr, centers_a, centers_b, 5)
+
+# ╔═╡ eae6cdb3-9d6a-4c7a-8d64-0f7a0832ae2c
+@bind z PlutoUI.Slider(axes(mpr, 3), default=centroids[3], show_value=true)
+
+# ╔═╡ b5b42c05-cc36-4c17-b64f-1fed5a83a6ef
+let
+	idxs = getindex.(findall(isone, cylinder[:, :, z]), [1 2])
+	f = Figure()
+
+	ax = CairoMakie.Axis(f[1, 1])
+	heatmap!(transpose(mpr[:, :, z]); colormap = :grays)
+	scatter!(idxs[:, 2], idxs[:, 1]; markersize = 1, color = :red)
+
+	f
+end
 
 # ╔═╡ Cell order:
 # ╠═011b0ae2-48d4-4141-8bdb-c94d87ef0a38
@@ -632,19 +673,22 @@ viz(cyl)
 # ╟─8f6a2277-504d-4009-ac15-cca75b1e6575
 # ╟─b53a9ab0-38e3-4144-990a-55f1f5cdd33d
 # ╟─17277b11-1c96-4ed4-9acb-be25403fe2aa
+# ╠═7d8ab876-fe0a-4abe-8790-9f02be5e157b
 # ╠═5bfbe465-2753-4054-b038-eca14e70c089
 # ╠═9fb78b86-c9ea-4247-8827-374ecdf1a771
 # ╠═73c2b825-9de4-4559-98e1-81eba0f57af0
 # ╠═db855edd-2f3e-42b4-b8c9-64e949669716
 # ╠═b85e535c-d2dd-498a-9bfa-c8ac3965167f
 # ╠═a4d0e49a-a962-42d8-a278-32fea583281c
-# ╠═4121b935-7b01-4176-9cb9-115e61e401e5
 # ╠═c0b40d91-d9fa-44e6-8f90-26a2a14a0bab
 # ╠═18430fe7-5612-43a0-8ae1-fb240f97c269
 # ╠═565ebd37-cd13-49ad-88ef-e3b9d0de3bec
 # ╠═35f9fea2-d84e-496d-b433-cd4aaebac40c
 # ╟─6483fd22-acdb-4325-8d67-bd54c08c9a27
 # ╟─200c67b9-bff2-456c-9b74-0ca1c31ee964
-# ╠═17e65e3a-5a10-4004-ab11-4018167db3e6
-# ╠═f7e370da-7542-4277-84a5-a9c64efaf27b
-# ╠═51e62cb9-a957-4c1b-83d8-7ed7b0cc87b9
+# ╠═7f90ed50-be16-4e1a-a2fb-b3ac2707302e
+# ╠═649f943d-8838-4258-a108-4de678561d83
+# ╠═2e72c9bb-e41c-493f-b62f-9cc60531382a
+# ╠═6b1ee364-7611-4fde-9354-aeee659a127f
+# ╟─eae6cdb3-9d6a-4c7a-8d64-0f7a0832ae2c
+# ╟─b5b42c05-cc36-4c17-b64f-1fed5a83a6ef

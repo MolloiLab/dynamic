@@ -433,23 +433,21 @@ md"""
 ## MPR
 """
 
-# ╔═╡ ca3ba794-0ae5-43d6-a93a-00f4e625be8f
-offset = Meshes.Point(centroids) - Meshes.Point(first(pts));
+# ╔═╡ 4b50a86e-fb36-4d26-9460-111f0465dce7
+function offset_interpolate(itp, plane, i, j, k)
+	itp((plane(i, j) + Meshes.normal(plane)*k).coords...)
+end
 
-# ╔═╡ 67735130-1469-4acd-8c44-8b2adf37383c
-plane = Meshes.Plane((Meshes.Point.(pts) .+ Ref(offset))...);
+# ╔═╡ 32d8eec0-892e-455f-9815-26eccc4dd3d6
+function create_mpr(centroids, points, r1, r2)
+	offset = Meshes.Point(centroids) - Meshes.Point(first(points))
+	plane = Meshes.Plane((Meshes.Point.(points) .+ Ref(offset))...)
+	mpr_itp = linear_interpolation(axes(dcm_heart), dcm_heart; extrapolation_bc = 0.0);
+	mpr = [offset_interpolate(mpr_itp, plane, i, j, k) for i in -r1:r1, j in -r1:r1, k in -r2:r2]
+end
 
-# ╔═╡ 8da676da-7175-4a25-a3f1-2fcfa4c60110
-offset_interpolate(itp, plane, i, j, k) = itp((plane(i, j) + Meshes.normal(plane)*k).coords...);
-
-# ╔═╡ ec18dafd-fb16-4d84-9f43-dfdb7d7f837f
-mpr_itp = linear_interpolation(axes(dcm_heart), dcm_heart; extrapolation_bc = 0.0);
-
-# ╔═╡ f2911ebb-6a75-4f2a-b9c8-e9a8dfb9436a
-r, r2 = 512/2, 320/2;
-
-# ╔═╡ 83a525a1-1ec5-4174-adc7-b19a2890c37b
-mpr = [offset_interpolate(mpr_itp, plane, i, j, k) for i in -r:r, j in -r:r, k in -r2:r2];
+# ╔═╡ d3282a5e-1a7a-4537-b7f1-cc4a7c99c464
+mpr = create_mpr(centroids, pts, 512/2, 320/2);
 
 # ╔═╡ 8f6a2277-504d-4009-ac15-cca75b1e6575
 @bind f PlutoUI.Slider(axes(mpr, 3), default=centroids[3], show_value=true)
@@ -457,50 +455,31 @@ mpr = [offset_interpolate(mpr_itp, plane, i, j, k) for i in -r:r, j in -r:r, k i
 # ╔═╡ b53a9ab0-38e3-4144-990a-55f1f5cdd33d
 heatmap(mpr[:, :, f], colormap=:grays)
 
-# ╔═╡ b5783227-5b17-4659-9415-44fe63900b9f
-begin
-	sums = []
-	for z in axes(mpr, 3)
-		push!(sums, sum(mpr[:, :, z]))
-	end
-end
-
-# ╔═╡ 99e5f475-6e51-463b-863b-40beb338e0ce
-findall(x -> x > 0, sums)
-
-# ╔═╡ 17277b11-1c96-4ed4-9acb-be25403fe2aa
+# ╔═╡ 200c67b9-bff2-456c-9b74-0ca1c31ee964
 md"""
-## Cavity centerpoints
+## Segment Calcium Inserts
 """
 
 # ╔═╡ 5bfbe465-2753-4054-b038-eca14e70c089
-mpr_slice = mpr[:, :, div(size(mpr, 3), 2)];
+# mpr_slice = mpr[:, :, div(size(mpr, 3), 2)];
 
-# ╔═╡ 9fb78b86-c9ea-4247-8827-374ecdf1a771
-thresh = 200
-
-# ╔═╡ 73c2b825-9de4-4559-98e1-81eba0f57af0
-mpr_slice_thresh = mpr_slice .> thresh;
-
-# ╔═╡ db855edd-2f3e-42b4-b8c9-64e949669716
-begin
+# ╔═╡ 97739511-af5a-46f9-a251-09c1e13ce758
+function get_insert_centers(mpr, threshold)
+	z = div(size(mpr, 3), 2)
+	mpr_slice = mpr[:, :, z]
+	mpr_slice_thresh = mpr_slice .> threshold
+	
 	# Use connected component labeling to identify and label all connected components
-	cc_labels2 = label_components(mpr_slice_thresh)
+	cc_labels = label_components(mpr_slice_thresh)
 
 	# Use the countmap function to count the number of occurrences of each value in the array, excluding 0
-	counts2 = countmap(cc_labels2[cc_labels2 .!= 0])
+	counts = countmap(cc_labels[cc_labels .!= 0])
 	
-	# # Find the value with the most occurrences
-	most_common_value_a, most_common_value_b = sort(collect(pairs(counts2)), by=x->x[2], rev=true)
-end
+	# Find the value with the most occurrences
+	most_common_value_a, most_common_value_b = sort(collect(pairs(counts)), by=x->x[2], rev=true)
 
-# ╔═╡ b85e535c-d2dd-498a-9bfa-c8ac3965167f
-most_common_value_a, most_common_value_b
-
-# ╔═╡ a4d0e49a-a962-42d8-a278-32fea583281c
-begin
-	# # Find the indices of the most common value in the original array
-	most_common_indices_a = findall(cc_labels2 .== most_common_value_a[1])
+	# Find the indices of the most common value in the original array
+	most_common_indices_a = findall(cc_labels .== most_common_value_a[1])
 
 	# Create boolean array from new cartesian indices
 	bool_arr_a = zeros(size(mpr_slice))
@@ -511,7 +490,7 @@ begin
 	box_a = component_boxes(label_components(bool_arr_a))
 
 	# Find the indices of the most common value in the original array
-	most_common_indices_b = findall(cc_labels2 .== most_common_value_b[1])
+	most_common_indices_b = findall(cc_labels .== most_common_value_b[1])
 
 	# Create boolean array from new cartesian indices
 	bool_arr_b = zeros(size(mpr_slice))
@@ -519,10 +498,14 @@ begin
 		bool_arr_b[i] = 1
 	end
 	centroids_b = Int.(round.(component_centroids(label_components(bool_arr_b))[2]))
+
+	centers_a, centers_b = [centroids_a..., z], [centroids_b..., z]
+	return centers_a, centers_b
+	
 end
 
-# ╔═╡ 565ebd37-cd13-49ad-88ef-e3b9d0de3bec
-centers_a, centers_b = [centroids_a..., div(size(mpr, 3), 2)], [centroids_b..., div(size(mpr, 3), 2)]
+# ╔═╡ 216c4a93-4acc-4c3e-9856-40ed1daf4611
+centers_a, centers_b = get_insert_centers(mpr, 200);
 
 # ╔═╡ 6483fd22-acdb-4325-8d67-bd54c08c9a27
 let
@@ -530,19 +513,13 @@ let
 	f = Figure()
 
 	ax = CairoMakie.Axis(f[1, 1])
-	heatmap!(mpr_slice; colormap=:grays)
-	# scatter!(box_a[2][1], markersize=msize, color=:red)
-	# scatter!(box_a[2][2], markersize=msize, color=:red)
-	scatter!(centroids_a, markersize=msize, color=:purple)
-	scatter!(centroids_b, markersize=msize, color=:blue)
+	z = div(size(mpr, 3), 2)
+	heatmap!(mpr[:, :, z]; colormap=:grays)
+	scatter!(centers_a[1], centers_a[2], markersize=msize, color=:purple)
+	scatter!(centers_b[1], centers_b[2], markersize=msize, color=:blue)
 
 	f
 end
-
-# ╔═╡ 200c67b9-bff2-456c-9b74-0ca1c31ee964
-md"""
-## Cavity cylinders
-"""
 
 # ╔═╡ 649f943d-8838-4258-a108-4de678561d83
 # Modify the in_cylinder function to accept Static Vectors
@@ -602,20 +579,75 @@ end
 # ╔═╡ 6b1ee364-7611-4fde-9354-aeee659a127f
 cylinder = create_cylinder(mpr, centers_a, centers_b, 12, -25);
 
+# ╔═╡ f484f26e-5cfc-4b6d-9978-f0a844ddedb9
+begin
+	cylinder2 = create_cylinder(mpr, centers_a, centers_b, 14, -25);
+	background_ring = Bool.(cylinder2 .- cylinder)
+end;
+
 # ╔═╡ eae6cdb3-9d6a-4c7a-8d64-0f7a0832ae2c
 @bind z PlutoUI.Slider(axes(mpr, 3), default=div(size(mpr, 3), 2), show_value=true)
 
 # ╔═╡ b5b42c05-cc36-4c17-b64f-1fed5a83a6ef
 let
 	idxs = getindex.(findall(isone, cylinder[:, :, z]), [1 2])
+	idxs_ring = getindex.(findall(isone, background_ring[:, :, z]), [1 2])
+	α = 0.25
+
 	f = Figure()
 
 	ax = CairoMakie.Axis(f[1, 1])
 	heatmap!(transpose(mpr[:, :, z]); colormap = :grays)
-	scatter!(idxs[:, 2], idxs[:, 1]; markersize = 1, color = :red)
+	scatter!(idxs[:, 2], idxs[:, 1]; markersize = 2, color = (:red, α), label = "inserts")
+	scatter!(idxs_ring[:, 2], idxs_ring[:, 1]; markersize = 3, color = (:blue, α), label = "background")
+	axislegend(ax)
 
 	f
 end
+
+# ╔═╡ 9b66d146-611e-4433-8426-b8f39815d138
+md"""
+## Segment Calibration Insert
+"""
+
+# ╔═╡ 9c9f52cc-9d52-4fdd-8326-7962f22d7979
+function square_indices(center, side_length)
+    half_side = div(side_length, 2)
+
+    top_left = center .- half_side
+    bottom_right = center .+ half_side
+
+    x_range = top_left[1]:bottom_right[1]
+    y_range = top_left[2]:bottom_right[2]
+
+	return x_range, y_range
+end
+
+# ╔═╡ 4d085105-bf0e-42bb-bd71-7e5938d91635
+x_range, y_range = square_indices(centers_a[1:2], 5)
+
+# ╔═╡ 927a753b-e8db-465a-883e-c939e767bede
+let
+	f = Figure()
+
+	ax = CairoMakie.Axis(f[1, 1])
+	heatmap!(transpose(mpr[:, :, 160]); colormap = :grays)
+	scatter!(y_range, x_range; markersize = 5, color = :red)
+
+	f
+end
+
+# ╔═╡ 611528e5-d64c-4d01-ab42-e32a8dcda37a
+hu_calcium_400 = mean(mpr[x_range, y_range, 160])
+
+# ╔═╡ 1adc7e00-02a1-479f-8df5-569db94e86b0
+# hu_heart_tissue = mean(mpr[background_ring])
+
+# ╔═╡ 976ddafe-2806-4ba8-b6ed-32e36939f2c5
+ρ_calcium_400 = 400
+
+# ╔═╡ 66d46419-3315-4e2f-b11c-71f38ccd1087
+
 
 # ╔═╡ Cell order:
 # ╠═011b0ae2-48d4-4141-8bdb-c94d87ef0a38
@@ -669,28 +701,27 @@ end
 # ╟─510683e8-10fc-4d33-b3c3-a9b7b14e5335
 # ╟─4c971b36-e6ce-4f38-aced-a15d55312a99
 # ╟─0f11603a-c90f-4130-89fd-9575328871f8
-# ╠═ca3ba794-0ae5-43d6-a93a-00f4e625be8f
-# ╠═67735130-1469-4acd-8c44-8b2adf37383c
-# ╠═8da676da-7175-4a25-a3f1-2fcfa4c60110
-# ╠═ec18dafd-fb16-4d84-9f43-dfdb7d7f837f
-# ╠═f2911ebb-6a75-4f2a-b9c8-e9a8dfb9436a
-# ╠═83a525a1-1ec5-4174-adc7-b19a2890c37b
+# ╠═4b50a86e-fb36-4d26-9460-111f0465dce7
+# ╠═32d8eec0-892e-455f-9815-26eccc4dd3d6
+# ╠═d3282a5e-1a7a-4537-b7f1-cc4a7c99c464
 # ╟─8f6a2277-504d-4009-ac15-cca75b1e6575
 # ╟─b53a9ab0-38e3-4144-990a-55f1f5cdd33d
-# ╠═b5783227-5b17-4659-9415-44fe63900b9f
-# ╠═99e5f475-6e51-463b-863b-40beb338e0ce
-# ╟─17277b11-1c96-4ed4-9acb-be25403fe2aa
-# ╠═5bfbe465-2753-4054-b038-eca14e70c089
-# ╠═9fb78b86-c9ea-4247-8827-374ecdf1a771
-# ╠═73c2b825-9de4-4559-98e1-81eba0f57af0
-# ╠═db855edd-2f3e-42b4-b8c9-64e949669716
-# ╠═b85e535c-d2dd-498a-9bfa-c8ac3965167f
-# ╠═a4d0e49a-a962-42d8-a278-32fea583281c
-# ╠═565ebd37-cd13-49ad-88ef-e3b9d0de3bec
-# ╟─6483fd22-acdb-4325-8d67-bd54c08c9a27
 # ╟─200c67b9-bff2-456c-9b74-0ca1c31ee964
+# ╠═5bfbe465-2753-4054-b038-eca14e70c089
+# ╠═97739511-af5a-46f9-a251-09c1e13ce758
+# ╠═216c4a93-4acc-4c3e-9856-40ed1daf4611
+# ╟─6483fd22-acdb-4325-8d67-bd54c08c9a27
 # ╠═649f943d-8838-4258-a108-4de678561d83
 # ╠═2e72c9bb-e41c-493f-b62f-9cc60531382a
 # ╠═6b1ee364-7611-4fde-9354-aeee659a127f
+# ╠═f484f26e-5cfc-4b6d-9978-f0a844ddedb9
 # ╟─eae6cdb3-9d6a-4c7a-8d64-0f7a0832ae2c
 # ╟─b5b42c05-cc36-4c17-b64f-1fed5a83a6ef
+# ╟─9b66d146-611e-4433-8426-b8f39815d138
+# ╠═9c9f52cc-9d52-4fdd-8326-7962f22d7979
+# ╠═4d085105-bf0e-42bb-bd71-7e5938d91635
+# ╟─927a753b-e8db-465a-883e-c939e767bede
+# ╠═611528e5-d64c-4d01-ab42-e32a8dcda37a
+# ╠═1adc7e00-02a1-479f-8df5-569db94e86b0
+# ╠═976ddafe-2806-4ba8-b6ed-32e36939f2c5
+# ╠═66d46419-3315-4e2f-b11c-71f38ccd1087

@@ -438,6 +438,9 @@ function offset_interpolate(itp, plane, i, j, k)
 	itp((plane(i, j) + Meshes.normal(plane)*k).coords...)
 end
 
+# ╔═╡ 6edfa2b7-63ae-4315-ac9f-caf96f0f51ed
+Meshes.Point(first(pts)...)
+
 # ╔═╡ 32d8eec0-892e-455f-9815-26eccc4dd3d6
 function create_mpr(centroids, points, r1, r2)
 	offset = Meshes.Point(centroids) - Meshes.Point(first(points))
@@ -459,9 +462,6 @@ heatmap(mpr[:, :, f], colormap=:grays)
 md"""
 ## Segment Calcium Inserts
 """
-
-# ╔═╡ 5bfbe465-2753-4054-b038-eca14e70c089
-# mpr_slice = mpr[:, :, div(size(mpr, 3), 2)];
 
 # ╔═╡ 97739511-af5a-46f9-a251-09c1e13ce758
 function get_insert_centers(mpr, threshold)
@@ -573,16 +573,16 @@ function create_cylinder(array, pt1, pt2, radius, offset)
             end
         end
     end
-    return cylinder
+    return Bool.(cylinder)
 end
 
 # ╔═╡ 6b1ee364-7611-4fde-9354-aeee659a127f
-cylinder = create_cylinder(mpr, centers_a, centers_b, 12, -25);
+cylinder = create_cylinder(mpr, centers_a, centers_b, 8, -25);
 
 # ╔═╡ f484f26e-5cfc-4b6d-9978-f0a844ddedb9
 begin
-	cylinder2 = create_cylinder(mpr, centers_a, centers_b, 14, -25);
-	background_ring = Bool.(cylinder2 .- cylinder)
+	cylinder2 = create_cylinder(mpr, centers_a, centers_b, 10, -25);
+	background_ring = cylinder2 .- cylinder
 end;
 
 # ╔═╡ eae6cdb3-9d6a-4c7a-8d64-0f7a0832ae2c
@@ -604,6 +604,15 @@ let
 
 	f
 end
+
+# ╔═╡ 1adc7e00-02a1-479f-8df5-569db94e86b0
+# hu_heart_tissue = mean(mpr[background_ring])
+
+# ╔═╡ faa8104f-b316-45fa-a733-82611099ea71
+hu_heart_tissue = mean(Bool.(background_ring))
+
+# ╔═╡ fe4995c8-12e5-4497-b7b2-31e29860b3a4
+hist(mpr[Bool.(cylinder)])
 
 # ╔═╡ 9b66d146-611e-4433-8426-b8f39815d138
 md"""
@@ -640,14 +649,31 @@ end
 # ╔═╡ 611528e5-d64c-4d01-ab42-e32a8dcda37a
 hu_calcium_400 = mean(mpr[x_range, y_range, 160])
 
-# ╔═╡ 1adc7e00-02a1-479f-8df5-569db94e86b0
-# hu_heart_tissue = mean(mpr[background_ring])
-
 # ╔═╡ 976ddafe-2806-4ba8-b6ed-32e36939f2c5
 ρ_calcium_400 = 400
 
-# ╔═╡ 66d46419-3315-4e2f-b11c-71f38ccd1087
+# ╔═╡ 017cfb8e-6586-4f93-b817-6afab3b10d30
+function _percentage_calcium(voxel_intensity, hu_calcium, hu_heart_tissue)
+    return precentage_calcium = (voxel_intensity - hu_heart_tissue) / (hu_calcium - hu_heart_tissue)
+end
 
+# ╔═╡ 66d46419-3315-4e2f-b11c-71f38ccd1087
+function score(vol::AbstractArray, hu_calcium, hu_heart_tissue, voxel_size, density_calcium)
+    number_calcium_voxels = []
+    for i in axes(vol, 1)
+        for j in axes(vol, 2)
+            for k in axes(vol, 3)
+                m = vol[i, j, k]
+                percent = _percentage_calcium(m, hu_calcium, hu_heart_tissue)
+                push!(number_calcium_voxels, percent)
+            end
+        end
+    end
+    return sum(number_calcium_voxels) * voxel_size * density_calcium
+end
+
+# ╔═╡ 96f14096-400a-43eb-8c24-a8aa393d105a
+voxel_size = pixel_size[1] * pixel_size[2] * pixel_size[3]
 
 # ╔═╡ Cell order:
 # ╠═011b0ae2-48d4-4141-8bdb-c94d87ef0a38
@@ -702,12 +728,12 @@ hu_calcium_400 = mean(mpr[x_range, y_range, 160])
 # ╟─4c971b36-e6ce-4f38-aced-a15d55312a99
 # ╟─0f11603a-c90f-4130-89fd-9575328871f8
 # ╠═4b50a86e-fb36-4d26-9460-111f0465dce7
+# ╠═6edfa2b7-63ae-4315-ac9f-caf96f0f51ed
 # ╠═32d8eec0-892e-455f-9815-26eccc4dd3d6
 # ╠═d3282a5e-1a7a-4537-b7f1-cc4a7c99c464
 # ╟─8f6a2277-504d-4009-ac15-cca75b1e6575
 # ╟─b53a9ab0-38e3-4144-990a-55f1f5cdd33d
 # ╟─200c67b9-bff2-456c-9b74-0ca1c31ee964
-# ╠═5bfbe465-2753-4054-b038-eca14e70c089
 # ╠═97739511-af5a-46f9-a251-09c1e13ce758
 # ╠═216c4a93-4acc-4c3e-9856-40ed1daf4611
 # ╟─6483fd22-acdb-4325-8d67-bd54c08c9a27
@@ -717,11 +743,15 @@ hu_calcium_400 = mean(mpr[x_range, y_range, 160])
 # ╠═f484f26e-5cfc-4b6d-9978-f0a844ddedb9
 # ╟─eae6cdb3-9d6a-4c7a-8d64-0f7a0832ae2c
 # ╟─b5b42c05-cc36-4c17-b64f-1fed5a83a6ef
+# ╠═1adc7e00-02a1-479f-8df5-569db94e86b0
+# ╠═faa8104f-b316-45fa-a733-82611099ea71
+# ╠═fe4995c8-12e5-4497-b7b2-31e29860b3a4
 # ╟─9b66d146-611e-4433-8426-b8f39815d138
 # ╠═9c9f52cc-9d52-4fdd-8326-7962f22d7979
 # ╠═4d085105-bf0e-42bb-bd71-7e5938d91635
 # ╟─927a753b-e8db-465a-883e-c939e767bede
 # ╠═611528e5-d64c-4d01-ab42-e32a8dcda37a
-# ╠═1adc7e00-02a1-479f-8df5-569db94e86b0
 # ╠═976ddafe-2806-4ba8-b6ed-32e36939f2c5
+# ╠═017cfb8e-6586-4f93-b817-6afab3b10d30
 # ╠═66d46419-3315-4e2f-b11c-71f38ccd1087
+# ╠═96f14096-400a-43eb-8c24-a8aa393d105a

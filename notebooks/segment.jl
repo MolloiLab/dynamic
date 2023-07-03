@@ -31,136 +31,104 @@ end
 # ╔═╡ 7e701979-31f6-45f2-a4d6-6928d93ad042
 TableOfContents()
 
-
-
 # ╔═╡ 2330d887-782e-4da1-ba3c-f27365ab3203
-# md"""
-# # Download From Orthanc
-# """
-
-
+md"""
+# Download From Orthanc
+"""
 
 # ╔═╡ ce6fc772-4353-4e34-ad46-c5664c8a431d
-# md"""
-# ## Get Studies
-# Insert the IP address associated with the Orthanc server into the input box below and then click "Submit". When the code is finished, you can inspect the files by clicking on the dictionary.
-# """
-
-
+md"""
+## Get Studies
+Insert the IP address associated with the Orthanc server into the input box below and then click "Submit". When the code is finished, you can inspect the files by clicking on the dictionary.
+"""
 
 # ╔═╡ 29398382-062e-4904-a09b-487ce65eb3da
-# @bind ip_address confirm(TextField(default="128.200.49.26"))
-
-
+@bind ip_address confirm(TextField(default="128.200.49.26"))
 
 # ╔═╡ 7624c25a-7dfa-4805-a014-40a61001c72b
-# studies_dict = get_all_studies(ip_address)
-
-
-
-# ╔═╡ 1ee500b3-7c50-4bd8-bf32-5fee3a373db2
-# @bind details confirm(download_info("Accession Number", "Series Number(s)", "Instance Number", "Output Directory"))
-
-
-
-# ╔═╡ 0ece2fe8-1bd2-45a4-a5dd-94501f553824
-# accession_number, series_num, instance_num, output_dir = details
-
-
+studies_dict = get_all_studies(ip_address)
 
 # ╔═╡ 31701dba-2979-4e86-aebf-d1ebb0306807
-# md"""
-# ## Get Series
-# Insert the accession number into the input box above and click "Submit". When the code is finished, you can inspect the files by clicking on the dictionary.
-# """
-
-
-
-# ╔═╡ 98e6b66a-551b-495a-92fe-48d825db7ae5
-# series_dict = get_all_series(studies_dict, accession_number, ip_address)
-
-
+md"""
+## Get Series
+Insert the accession number into the input box above and click "Submit". When the code is finished, you can inspect the files by clicking on the dictionary.
+"""
 
 # ╔═╡ 28ce38bf-89e3-40b3-9470-03aeb5bfbfb1
-# md"""
-# ## Get Instance(s)
-# You can insert the series number of interest into the input box above and then click "Submit". When the code is finished, you can inspect the files by clicking on the dictionary.
-# """
-
-
-
-# ╔═╡ 6f36409a-3dfc-4a2e-977c-05953ff3a7dc
-# series_num_vec = parse.(Int, split(series_num, ","))
-
-
-
-# ╔═╡ 812a0307-b92f-4c4c-91c8-769a1bb5d6b1
-# begin
-# 	instances_dicts = []
-# 	for i in series_num_vec
-# 		instances_dict = get_all_instances(series_dict, string(i), ip_address)
-# 		push!(instances_dicts, instances_dict)
-# 	end
-# end
-
-
-
-# ╔═╡ b1f5d8bd-a197-490e-89ab-c3258c4ac2f6
-# instances_dicts
-
-
+md"""
+## Get Instance(s)
+You can insert the series number of interest into the input box above and then click "Submit". When the code is finished, you can inspect the files by clicking on the dictionary.
+"""
 
 # ╔═╡ a0b0cf10-76cc-4fa0-abc6-2cdbfb880617
-# md"""
-# # Download DICOM Instance(s)
-# Type the folder path above, where you want the DICOM files to be saved (or use a temporary directory via `mktempdir()`) in the code cell below. Then type in the instance number that you want to download and click "Submit".
-# """
-
-
-
-# ╔═╡ 60de75b1-791c-446b-b99b-beb799a1a9f4
-# instance_number = parse(Int64, instance_num)
-
-
-
-# ╔═╡ 081e437e-dc99-421a-a4b4-735d47cdb77d
-# for i in 1:length(instances_dicts)
-# 	global output_path = joinpath(output_dir, string(series_num_vec[i]))
-# 	if !isdir(output_path)
-# 		mkpath(output_path)
-# 	end
-# 	download_instances(instances_dicts[i], instance_number, output_path, ip_address)
-# end
+md"""
+# Download DICOM Instance(s)
+Type the folder path above, where you want the DICOM files to be saved (or use a temporary directory via `mktempdir()`) in the code cell below. Then type in the instance number that you want to download and click "Submit".
+"""
 
 # ╔═╡ a257fd92-ebe0-4551-a83c-0db89d54dbb4
-# function download_info(acc, ser, inst, save_folder_path)
+function download_info(acc, ser, inst, save_folder_path)
 	
-# 	return PlutoUI.combine() do Child
+	return PlutoUI.combine() do Child
 		
-# 		inputs = [
-# 			md""" $(acc): $(
-# 				Child(TextField(default="2751"))
-# 			)""",
-# 			md""" $(ser): $(
-# 				Child(TextField(default="5"))
-# 			)""",
-# 			md""" $(inst): $(
-# 				Child(TextField(default="1"))
-# 			)""",
-# 			md""" $(save_folder_path): $(
-# 				Child(TextField(default="/Users/daleblack/Desktop/dcms")))
-# 			)"""
-# 		]
+		inputs = [
+			md""" $(acc): $(
+				Child(TextField(default="2751"))
+			)""",
+			md""" $(ser): $(
+				Child(TextField(default="5"))
+			)""",
+			md""" $(inst): $(
+				Child(TextField(default="1"))
+			)""",
+			md""" $(save_folder_path): $(
+				Child(TextField(default="/Users/daleblack/Desktop/dcms")))
+			)"""
+		]
 		
-# 		md"""
-# 		#### Scan Details
-# 		Input the relevant DICOM information to download the appropriate scans
-# 		$(inputs)
-# 		"""
-# 	end
-# end
+		md"""
+		#### Scan Details
+		Input the relevant DICOM information to download the appropriate scans
+		$(inputs)
+		"""
+	end
+end
 
+# ╔═╡ 1ee500b3-7c50-4bd8-bf32-5fee3a373db2
+@bind details confirm(download_info("Accession Number", "Series Number(s)", "Instance Number", "Output Directory"))
 
+# ╔═╡ 0ece2fe8-1bd2-45a4-a5dd-94501f553824
+accession_number, series_num, instance_num, output_dir = details
+
+# ╔═╡ 98e6b66a-551b-495a-92fe-48d825db7ae5
+series_dict = get_all_series(studies_dict, accession_number, ip_address)
+
+# ╔═╡ 6f36409a-3dfc-4a2e-977c-05953ff3a7dc
+series_num_vec = parse.(Int, split(series_num, ","))
+
+# ╔═╡ 812a0307-b92f-4c4c-91c8-769a1bb5d6b1
+begin
+	instances_dicts = []
+	for i in series_num_vec
+		instances_dict = get_all_instances(series_dict, string(i), ip_address)
+		push!(instances_dicts, instances_dict)
+	end
+end
+
+# ╔═╡ b1f5d8bd-a197-490e-89ab-c3258c4ac2f6
+instances_dicts
+
+# ╔═╡ 60de75b1-791c-446b-b99b-beb799a1a9f4
+instance_number = parse(Int64, instance_num)
+
+# ╔═╡ 081e437e-dc99-421a-a4b4-735d47cdb77d
+for i in 1:length(instances_dicts)
+	global output_path = joinpath(output_dir, string(series_num_vec[i]))
+	if !isdir(output_path)
+		mkpath(output_path)
+	end
+	download_instances(instances_dicts[i], instance_number, output_path, ip_address)
+end
 
 # ╔═╡ 340a1e3d-9d29-4afe-88d3-2e38da413595
 md"""
@@ -168,7 +136,7 @@ md"""
 """
 
 # ╔═╡ 4edf70c6-a181-494d-b996-8bb8a44f1f32
-output_path = "/Users/daleblack/Desktop/dcms/5"
+# output_path = "/Users/daleblack/Desktop/dcms/5"
 
 # ╔═╡ b8a51c87-90cf-4259-9061-4e8dc8e0632c
 dcms = dcmdir_parse(output_path)
@@ -487,11 +455,23 @@ end
 # ╔═╡ d3282a5e-1a7a-4537-b7f1-cc4a7c99c464
 mpr = create_mpr(centroids, pts, 512/2, 320/2);
 
+# ╔═╡ 24c102fd-1fc0-4c31-9ad1-d9af691159b0
+centroids
+
 # ╔═╡ 8f6a2277-504d-4009-ac15-cca75b1e6575
 @bind f PlutoUI.Slider(axes(mpr, 3), default=centroids[3], show_value=true)
 
 # ╔═╡ b53a9ab0-38e3-4144-990a-55f1f5cdd33d
 heatmap(mpr[:, :, f], colormap=:grays)
+
+# ╔═╡ aa8d9f5a-c272-4dba-894c-653b92501bb3
+let
+	f = Figure()
+	ax = CairoMakie.Axis(f[1, 1])
+	heatmap!(mpr[:, :, 158], colormap=:grays)
+	scatter!(centroids[1], centroids[2])
+	f
+end
 
 # ╔═╡ 200c67b9-bff2-456c-9b74-0ca1c31ee964
 md"""
@@ -617,7 +597,7 @@ cylinder = create_cylinder(mpr, centers_a, centers_b, 8, -25);
 # ╔═╡ f484f26e-5cfc-4b6d-9978-f0a844ddedb9
 begin
 	_background_ring = create_cylinder(mpr, centers_a, centers_b, 12, -25);
-	background_ring = _background_ring .- cylinder
+	background_ring = Bool.(_background_ring .- cylinder)
 end;
 
 # ╔═╡ eae6cdb3-9d6a-4c7a-8d64-0f7a0832ae2c
@@ -684,30 +664,10 @@ function score(vol::AbstractArray, hu_calcium, hu_heart_tissue, voxel_size, dens
     return sum(number_calcium_voxels) * voxel_size * density_calcium
 end
 
-# ╔═╡ 611528e5-d64c-4d01-ab42-e32a8dcda37a
-hu_calcium_400 = mean(mpr[binary_calibration])
-
-# ╔═╡ 976ddafe-2806-4ba8-b6ed-32e36939f2c5
-ρ_calcium_400 = 400
-
-# ╔═╡ 96f14096-400a-43eb-8c24-a8aa393d105a
-voxel_size = pixel_size[1] * pixel_size[2] * pixel_size[3]
-
-# ╔═╡ faa8104f-b316-45fa-a733-82611099ea71
-hu_heart_tissue_bkg = mean(Bool.(background_ring))
-
-# ╔═╡ a8835581-db72-43d3-913d-b62a23607cdc
-begin
-	gt_density = 50 # mg/cm^3
-	gt_density = gt_density * 1e-3 # mg/mm^3
-
-	# π * (diameter/2)^2 * length
-	gt_volume = π * (5/2)^2 * 7 # mm3
-	gt_mass = gt_density * gt_volume
-end
-
-# ╔═╡ 61cb6b64-ae9a-4951-be16-608b23015a31
-hist(mpr[cylinder])
+# ╔═╡ d5b62cb5-15ec-421c-a9ba-379b801cde72
+md"""
+## Remove Outliers (Air)
+"""
 
 # ╔═╡ 479ea014-1200-487f-a851-ee3e45339620
 function remove_outliers(vector)
@@ -715,18 +675,62 @@ function remove_outliers(vector)
     Q3 = quantile(vector, 0.75)
     IQR = Q3 - Q1
     lower_bound = Q1 - 1.5 * IQR
-    upper_bound = Q3 + 1.5 * IQR
-    return [x for x in vector if (x > lower_bound && x < upper_bound)]
+    return [x for x in vector if x > lower_bound]
 end
 
 # ╔═╡ 1a196009-3f5f-45d7-9d3f-ad9da9afcd1b
 mpr_clean = remove_outliers(mpr[cylinder]);
 
-# ╔═╡ adf87a78-3def-49f3-a295-44a81f206432
-hist(mpr_clean)
+# ╔═╡ 71f39103-4ae2-4673-9fe9-7a1a02002d7f
+let
+	f = Figure(resolution = (1000, 1200))
+	ax = CairoMakie.Axis(f[1, 1], title = "Original")
+	hist!(mpr[cylinder])
+
+	ax = CairoMakie.Axis(f[2, 1], title = "Clean")
+	hist!(mpr_clean)
+
+	f
+end
+
+# ╔═╡ 7caa6404-7fdb-4b6e-a976-86f63cab282a
+md"""
+# Score
+"""
+
+# ╔═╡ e28e7c8a-51fd-43d6-9291-05501922db07
+md"""
+## Ground Truth
+"""
+
+# ╔═╡ a8835581-db72-43d3-913d-b62a23607cdc
+begin
+	gt_density = 0.050 # mg/mm^3
+
+	# π * (diameter/2)^2 * length
+	gt_volume = π * (5/2)^2 * 7 # mm3
+	gt_mass = gt_density * gt_volume
+end
+
+# ╔═╡ a7c997e6-2dcf-487e-8b9d-3524c7a0ea27
+md"""
+## Calculated
+"""
+
+# ╔═╡ 611528e5-d64c-4d01-ab42-e32a8dcda37a
+hu_calcium_400 = mean(mpr[binary_calibration])
+
+# ╔═╡ 976ddafe-2806-4ba8-b6ed-32e36939f2c5
+ρ_calcium_400 = 0.400 # mg/mm^3
+
+# ╔═╡ 96f14096-400a-43eb-8c24-a8aa393d105a
+voxel_size = pixel_size[1] * pixel_size[2] * pixel_size[3]
+
+# ╔═╡ faa8104f-b316-45fa-a733-82611099ea71
+hu_heart_tissue_bkg = mean(mpr[background_ring])
 
 # ╔═╡ 729d6ef4-5427-4a1c-af66-460e83505187
-score(mpr_clean, hu_calcium_400, hu_heart_tissue_bkg, voxel_size, ρ_calcium_400)
+vf_mass = score(mpr_clean, hu_calcium_400, hu_heart_tissue_bkg, voxel_size, ρ_calcium_400)
 
 # ╔═╡ Cell order:
 # ╠═011b0ae2-48d4-4141-8bdb-c94d87ef0a38
@@ -745,10 +749,10 @@ score(mpr_clean, hu_calcium_400, hu_heart_tissue_bkg, voxel_size, ρ_calcium_400
 # ╠═6f36409a-3dfc-4a2e-977c-05953ff3a7dc
 # ╠═812a0307-b92f-4c4c-91c8-769a1bb5d6b1
 # ╠═b1f5d8bd-a197-490e-89ab-c3258c4ac2f6
-# ╟─a0b0cf10-76cc-4fa0-abc6-2cdbfb880617
+# ╠═a0b0cf10-76cc-4fa0-abc6-2cdbfb880617
 # ╠═60de75b1-791c-446b-b99b-beb799a1a9f4
 # ╠═081e437e-dc99-421a-a4b4-735d47cdb77d
-# ╟─a257fd92-ebe0-4551-a83c-0db89d54dbb4
+# ╠═a257fd92-ebe0-4551-a83c-0db89d54dbb4
 # ╟─340a1e3d-9d29-4afe-88d3-2e38da413595
 # ╠═4edf70c6-a181-494d-b996-8bb8a44f1f32
 # ╠═b8a51c87-90cf-4259-9061-4e8dc8e0632c
@@ -785,8 +789,10 @@ score(mpr_clean, hu_calcium_400, hu_heart_tissue_bkg, voxel_size, ρ_calcium_400
 # ╠═6edfa2b7-63ae-4315-ac9f-caf96f0f51ed
 # ╠═32d8eec0-892e-455f-9815-26eccc4dd3d6
 # ╠═d3282a5e-1a7a-4537-b7f1-cc4a7c99c464
+# ╠═24c102fd-1fc0-4c31-9ad1-d9af691159b0
 # ╟─8f6a2277-504d-4009-ac15-cca75b1e6575
-# ╟─b53a9ab0-38e3-4144-990a-55f1f5cdd33d
+# ╠═b53a9ab0-38e3-4144-990a-55f1f5cdd33d
+# ╠═aa8d9f5a-c272-4dba-894c-653b92501bb3
 # ╟─200c67b9-bff2-456c-9b74-0ca1c31ee964
 # ╠═97739511-af5a-46f9-a251-09c1e13ce758
 # ╠═216c4a93-4acc-4c3e-9856-40ed1daf4611
@@ -802,13 +808,16 @@ score(mpr_clean, hu_calcium_400, hu_heart_tissue_bkg, voxel_size, ρ_calcium_400
 # ╟─927a753b-e8db-465a-883e-c939e767bede
 # ╠═017cfb8e-6586-4f93-b817-6afab3b10d30
 # ╠═66d46419-3315-4e2f-b11c-71f38ccd1087
+# ╟─d5b62cb5-15ec-421c-a9ba-379b801cde72
+# ╠═479ea014-1200-487f-a851-ee3e45339620
+# ╠═1a196009-3f5f-45d7-9d3f-ad9da9afcd1b
+# ╟─71f39103-4ae2-4673-9fe9-7a1a02002d7f
+# ╟─7caa6404-7fdb-4b6e-a976-86f63cab282a
+# ╟─e28e7c8a-51fd-43d6-9291-05501922db07
+# ╠═a8835581-db72-43d3-913d-b62a23607cdc
+# ╟─a7c997e6-2dcf-487e-8b9d-3524c7a0ea27
 # ╠═611528e5-d64c-4d01-ab42-e32a8dcda37a
 # ╠═976ddafe-2806-4ba8-b6ed-32e36939f2c5
 # ╠═96f14096-400a-43eb-8c24-a8aa393d105a
 # ╠═faa8104f-b316-45fa-a733-82611099ea71
-# ╠═a8835581-db72-43d3-913d-b62a23607cdc
-# ╠═61cb6b64-ae9a-4951-be16-608b23015a31
-# ╠═479ea014-1200-487f-a851-ee3e45339620
-# ╠═1a196009-3f5f-45d7-9d3f-ad9da9afcd1b
-# ╠═adf87a78-3def-49f3-a295-44a81f206432
 # ╠═729d6ef4-5427-4a1c-af66-460e83505187

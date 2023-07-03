@@ -28,6 +28,15 @@ begin
 	using DICOMUtils, ActiveContours, OrthancTools
 end
 
+# ╔═╡ b6f3279a-1c31-4c42-bac2-1adc9ec317b4
+begin
+	using CalciumScoring
+	using CalciumScoring: score
+end
+
+# ╔═╡ 2d0f900a-85e2-4956-b08e-9f85e1d68a60
+include(srcdir("masks.jl"));
+
 # ╔═╡ 7e701979-31f6-45f2-a4d6-6928d93ad042
 TableOfContents()
 
@@ -645,24 +654,24 @@ let
 end
 
 # ╔═╡ 017cfb8e-6586-4f93-b817-6afab3b10d30
-function _percentage_calcium(voxel_intensity, hu_calcium, hu_heart_tissue)
-    return precentage_calcium = (voxel_intensity - hu_heart_tissue) / (hu_calcium - hu_heart_tissue)
-end
+# function _percentage_calcium(voxel_intensity, hu_calcium, hu_heart_tissue)
+#     return precentage_calcium = (voxel_intensity - hu_heart_tissue) / (hu_calcium - hu_heart_tissue)
+# end
 
 # ╔═╡ 66d46419-3315-4e2f-b11c-71f38ccd1087
-function score(vol::AbstractArray, hu_calcium, hu_heart_tissue, voxel_size, density_calcium)
-    number_calcium_voxels = []
-    for i in axes(vol, 1)
-        for j in axes(vol, 2)
-            for k in axes(vol, 3)
-                m = vol[i, j, k]
-                percent = _percentage_calcium(m, hu_calcium, hu_heart_tissue)
-                push!(number_calcium_voxels, percent)
-            end
-        end
-    end
-    return sum(number_calcium_voxels) * voxel_size * density_calcium
-end
+# function score(vol::AbstractArray, hu_calcium, hu_heart_tissue, voxel_size, density_calcium)
+#     number_calcium_voxels = []
+#     for i in axes(vol, 1)
+#         for j in axes(vol, 2)
+#             for k in axes(vol, 3)
+#                 m = vol[i, j, k]
+#                 percent = _percentage_calcium(m, hu_calcium, hu_heart_tissue)
+#                 push!(number_calcium_voxels, percent)
+#             end
+#         end
+#     end
+#     return sum(number_calcium_voxels) * voxel_size * density_calcium
+# end
 
 # ╔═╡ d5b62cb5-15ec-421c-a9ba-379b801cde72
 md"""
@@ -714,7 +723,7 @@ end
 
 # ╔═╡ a7c997e6-2dcf-487e-8b9d-3524c7a0ea27
 md"""
-## Calculated
+## Volume Fraction
 """
 
 # ╔═╡ 611528e5-d64c-4d01-ab42-e32a8dcda37a
@@ -730,7 +739,24 @@ voxel_size = pixel_size[1] * pixel_size[2] * pixel_size[3]
 hu_heart_tissue_bkg = mean(mpr[background_ring])
 
 # ╔═╡ 729d6ef4-5427-4a1c-af66-460e83505187
-vf_mass = score(mpr_clean, hu_calcium_400, hu_heart_tissue_bkg, voxel_size, ρ_calcium_400)
+vf_mass = score(mpr_clean, hu_calcium_400, hu_heart_tissue_bkg, voxel_size, ρ_calcium_400, VolumeFraction())
+
+# ╔═╡ 88c88bc1-51f3-4c5c-8d5d-5eb9c0e6b64e
+md"""
+## Agatston
+"""
+
+# ╔═╡ f446cc59-1fa9-4747-84bb-59597c4d6039
+overlayed_mask = create_mask(mpr, cylinder);
+
+# ╔═╡ ba9b8451-023c-400c-8555-11324b092cbb
+kV = header[tag"KVP"]
+
+# ╔═╡ 8f32acdc-3ade-44b9-82f4-bf5031c0a9da
+mass_cal_factor = ρ_calcium_400 / hu_calcium_400
+
+# ╔═╡ 0af83bc7-9bfd-4efd-8a6c-3b85eae45e75
+a_agatston, a_volume, a_mass = score(overlayed_mask, pixel_size, mass_cal_factor, Agatston(); kV=kV)
 
 # ╔═╡ Cell order:
 # ╠═011b0ae2-48d4-4141-8bdb-c94d87ef0a38
@@ -749,10 +775,10 @@ vf_mass = score(mpr_clean, hu_calcium_400, hu_heart_tissue_bkg, voxel_size, ρ_c
 # ╠═6f36409a-3dfc-4a2e-977c-05953ff3a7dc
 # ╠═812a0307-b92f-4c4c-91c8-769a1bb5d6b1
 # ╠═b1f5d8bd-a197-490e-89ab-c3258c4ac2f6
-# ╠═a0b0cf10-76cc-4fa0-abc6-2cdbfb880617
+# ╟─a0b0cf10-76cc-4fa0-abc6-2cdbfb880617
 # ╠═60de75b1-791c-446b-b99b-beb799a1a9f4
 # ╠═081e437e-dc99-421a-a4b4-735d47cdb77d
-# ╠═a257fd92-ebe0-4551-a83c-0db89d54dbb4
+# ╟─a257fd92-ebe0-4551-a83c-0db89d54dbb4
 # ╟─340a1e3d-9d29-4afe-88d3-2e38da413595
 # ╠═4edf70c6-a181-494d-b996-8bb8a44f1f32
 # ╠═b8a51c87-90cf-4259-9061-4e8dc8e0632c
@@ -816,8 +842,15 @@ vf_mass = score(mpr_clean, hu_calcium_400, hu_heart_tissue_bkg, voxel_size, ρ_c
 # ╟─e28e7c8a-51fd-43d6-9291-05501922db07
 # ╠═a8835581-db72-43d3-913d-b62a23607cdc
 # ╟─a7c997e6-2dcf-487e-8b9d-3524c7a0ea27
+# ╠═b6f3279a-1c31-4c42-bac2-1adc9ec317b4
 # ╠═611528e5-d64c-4d01-ab42-e32a8dcda37a
 # ╠═976ddafe-2806-4ba8-b6ed-32e36939f2c5
 # ╠═96f14096-400a-43eb-8c24-a8aa393d105a
 # ╠═faa8104f-b316-45fa-a733-82611099ea71
 # ╠═729d6ef4-5427-4a1c-af66-460e83505187
+# ╟─88c88bc1-51f3-4c5c-8d5d-5eb9c0e6b64e
+# ╠═2d0f900a-85e2-4956-b08e-9f85e1d68a60
+# ╠═f446cc59-1fa9-4747-84bb-59597c4d6039
+# ╠═ba9b8451-023c-400c-8555-11324b092cbb
+# ╠═8f32acdc-3ade-44b9-82f4-bf5031c0a9da
+# ╠═0af83bc7-9bfd-4efd-8a6c-3b85eae45e75

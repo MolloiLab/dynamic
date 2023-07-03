@@ -24,7 +24,7 @@ using DrWatson
 # ╔═╡ f6750b60-00c9-4f89-bc20-0276a2d6ab96
 # ╠═╡ show_logs = false
 begin
-	using Revise, PlutoUI, DICOM, CairoMakie, LinearAlgebra, Images, StatsBase, Unitful, Meshes, Interpolations, StaticArrays
+	using Revise, PlutoUI, DICOM, CairoMakie, LinearAlgebra, Images, StatsBase, Unitful, Meshes, Interpolations, StaticArrays, DataFrames, IterTools
 	using DICOMUtils, ActiveContours, OrthancTools
 end
 
@@ -39,6 +39,31 @@ include(srcdir("masks.jl"));
 
 # ╔═╡ 7e701979-31f6-45f2-a4d6-6928d93ad042
 TableOfContents()
+
+# ╔═╡ 984cb619-c918-4558-a0ee-6b82cf03bf76
+md"""
+# Docs
+"""
+
+# ╔═╡ f40642fe-2fc4-4bde-bf9f-690c0c9e30eb
+begin
+	insert_radii = [1.2, 3.0, 5.0] ./ 2 # mm
+	insert_densities = [0.05, 0.1, 0.25, 0.4] # mg/mm^3
+	heart_rates = [0, 20, 40, 60, 80] # bpm
+	scan_types = ["de_80kv", "de_135kv", "se_80kv", "se_120kv", "se_135kv"]
+	slice_thicknesses = [0.5, 1.0, 3.0] # mm
+	reconstruction_types = ["fbp", "aidr"]
+end;
+
+# ╔═╡ 87721c59-de02-45e8-8077-1709ab413696
+prod = product(insert_radii, insert_densities, heart_rates, scan_types, slice_thicknesses, reconstruction_types);
+
+# ╔═╡ 95cb337c-8b57-424b-9399-c966dab6b53c
+begin
+	df = DataFrame(collect(prod))
+	rename!(df, [:insert_radii, :insert_densities, :heart_rates, :scan_types, :slice_thickness, :reconstruction_types])
+	sort!(df, [:insert_radii, :insert_densities, :heart_rates])
+end
 
 # ╔═╡ 2330d887-782e-4da1-ba3c-f27365ab3203
 md"""
@@ -404,7 +429,7 @@ end
 begin
 	idx_plane, cc_labels = find_heart_plane(dcm_heart, (begining_slice, end_slice))
 	idx_plane = getindex.(idx_plane, [1 2 3])
-end
+end;
 
 # ╔═╡ 2aa24477-adc5-45b0-a103-f7fbe577cab0
 begin
@@ -417,7 +442,7 @@ begin
 	# # Find the indices of the most common value in the original array
 	most_common_indices = findall(cc_labels .== most_common_value[1])
 	most_common_indices = getindex.(most_common_indices, [1 2 3])
-end
+end;
 
 # ╔═╡ 1a5ed8aa-1f34-4cf6-b1e3-cc1a55fd123d
 pts = most_common_indices[1+100, :], most_common_indices[Int(round(end/2)), :], most_common_indices[end-100, :];
@@ -653,26 +678,6 @@ let
 	f
 end
 
-# ╔═╡ 017cfb8e-6586-4f93-b817-6afab3b10d30
-# function _percentage_calcium(voxel_intensity, hu_calcium, hu_heart_tissue)
-#     return precentage_calcium = (voxel_intensity - hu_heart_tissue) / (hu_calcium - hu_heart_tissue)
-# end
-
-# ╔═╡ 66d46419-3315-4e2f-b11c-71f38ccd1087
-# function score(vol::AbstractArray, hu_calcium, hu_heart_tissue, voxel_size, density_calcium)
-#     number_calcium_voxels = []
-#     for i in axes(vol, 1)
-#         for j in axes(vol, 2)
-#             for k in axes(vol, 3)
-#                 m = vol[i, j, k]
-#                 percent = _percentage_calcium(m, hu_calcium, hu_heart_tissue)
-#                 push!(number_calcium_voxels, percent)
-#             end
-#         end
-#     end
-#     return sum(number_calcium_voxels) * voxel_size * density_calcium
-# end
-
 # ╔═╡ d5b62cb5-15ec-421c-a9ba-379b801cde72
 md"""
 ## Remove Outliers (Air)
@@ -685,7 +690,11 @@ function remove_outliers(vector)
     IQR = Q3 - Q1
     lower_bound = Q1 - 1.5 * IQR
     return [x for x in vector if x > lower_bound]
+    # return [x for x in vector if x > -maximum(mpr[cylinder])]
 end
+
+# ╔═╡ f3816d36-724a-4944-a188-94e11f784d34
+maximum(mpr[cylinder])
 
 # ╔═╡ 1a196009-3f5f-45d7-9d3f-ad9da9afcd1b
 mpr_clean = remove_outliers(mpr[cylinder]);
@@ -763,6 +772,10 @@ a_agatston, a_volume, a_mass = score(overlayed_mask, pixel_size, mass_cal_factor
 # ╠═c66fda61-be14-4a08-810a-0d75ba617786
 # ╠═f6750b60-00c9-4f89-bc20-0276a2d6ab96
 # ╠═7e701979-31f6-45f2-a4d6-6928d93ad042
+# ╟─984cb619-c918-4558-a0ee-6b82cf03bf76
+# ╠═f40642fe-2fc4-4bde-bf9f-690c0c9e30eb
+# ╠═87721c59-de02-45e8-8077-1709ab413696
+# ╠═95cb337c-8b57-424b-9399-c966dab6b53c
 # ╟─2330d887-782e-4da1-ba3c-f27365ab3203
 # ╟─ce6fc772-4353-4e34-ad46-c5664c8a431d
 # ╟─29398382-062e-4904-a09b-487ce65eb3da
@@ -832,10 +845,9 @@ a_agatston, a_volume, a_mass = score(overlayed_mask, pixel_size, mass_cal_factor
 # ╟─9b66d146-611e-4433-8426-b8f39815d138
 # ╠═ad13b5a6-1232-48ed-b91e-8b23896a0bd3
 # ╟─927a753b-e8db-465a-883e-c939e767bede
-# ╠═017cfb8e-6586-4f93-b817-6afab3b10d30
-# ╠═66d46419-3315-4e2f-b11c-71f38ccd1087
 # ╟─d5b62cb5-15ec-421c-a9ba-379b801cde72
 # ╠═479ea014-1200-487f-a851-ee3e45339620
+# ╠═f3816d36-724a-4944-a188-94e11f784d34
 # ╠═1a196009-3f5f-45d7-9d3f-ad9da9afcd1b
 # ╟─71f39103-4ae2-4673-9fe9-7a1a02002d7f
 # ╟─7caa6404-7fdb-4b6e-a976-86f63cab282a

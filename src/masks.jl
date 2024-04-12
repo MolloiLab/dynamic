@@ -1,5 +1,3 @@
-using ImageMorphology
-
 function create_mask(array, mask)
     @assert size(array) == size(mask)
     idxs = findall(x -> x == true, mask)

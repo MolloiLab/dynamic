@@ -1,3 +1,5 @@
+using ImageCore: channelview
+
 """
     chan_vese(img;
         μ::Real=0.25,
@@ -120,7 +122,7 @@ function chan_vese(img;
                    init_level_set=initial_level_set(size(img)))
     # Signs used in the codes and comments mainly follow paper[3] in the References.
     axes(img) == axes(init_level_set) || throw(ArgumentError("axes of input image and init_level_set should be equal. Instead they are $(axes(img)) and $(axes(init_level_set))."))
-    img = float64.(channelview(img))
+    img = Float64.(channelview(img))
     N = ndims(img)
     iter = 0
     h = 1.0

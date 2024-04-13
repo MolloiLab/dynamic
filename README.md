@@ -18,7 +18,7 @@
 ### Phantom Insert Layout
 ![alt text](images/phantom_layout.png "Phantom Insert Layout")
 
-Notice how the phantom is set up in a way for easy automatic segmentation. Specifically the phantom contains mostly background inserts and only one row of inserts for measurements, without outer inserts of the highest density large inserts (`n`) that are not meant for measurement but specifically just for detection of automatic segmentation. Then it contains another set up background inserts, then three measurement inserts with varying amounts of calcium (`a` - `n`)
+Notice how the phantom is set up in a way for easy automatic segmentation. Specifically the phantom contains mostly background inserts and only one row of inserts for measurements, with the outer inserts of the highest density large inserts (`n`) that are not meant for measurement but specifically just for detection of automatic segmentation. Then it contains another set of background inserts, then three measurement inserts with varying amounts of calcium (`a` - `n`)
 
 *NOTE: In order to avoid the effect of air as much as possible, the inserts were surrounded by silly putty that is specifically around the hounsfield unit (HU)/intensity of the CIRS background tissue (~ 50 HU). This is likely imperfect and will have some effect on the results, but it is much better that having air (~ -1000 HU)*
 

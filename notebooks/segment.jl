@@ -132,10 +132,10 @@ header = dcms[1].meta;
 header
 
 # ╔═╡ 3ad9eb7c-9241-4a06-8308-b6ba33aa492f
-# ╠═╡ disabled = true
-#=╠═╡
-pixel_size = get_pixel_size(header)
-  ╠═╡ =#
+md"""
+!!! warning
+	The `pixel_size` should automatically be extracted from the DICOM header information using `get_pixel_size(header)` (from the src file `dicomutils.jl`). But the dicom tag associated with the pixel size is not in the header for some reason, so right now this is being hardcoded below. This should be investigated further
+"""
 
 # ╔═╡ c7cd528e-8ee0-47ee-aaf6-47158532e2ae
 pixel_size = [0.5, 0.5, 0.5]
@@ -225,8 +225,17 @@ heart_cv = chan_vese(dcm_arr; init_level_set = init_mask);
 # ╔═╡ ddcf30bb-0db0-4c1c-bec0-c1eec9289bba
 centroids = centroids_from_mask(heart_cv)
 
+# ╔═╡ 020c0257-1d58-4f26-aefb-b019024b4629
+md"""
+!!! warning
+	This radius for the heart mask is currently hardcoded to `100` as seen below. This likely wont be good enough and needs to be somewhat more dynamic to work for every type of scan. This should be investigated more
+"""
+
+# ╔═╡ d77655b5-2249-4fe7-91c5-5f2bc69f2aba
+heart_rad = 100
+
 # ╔═╡ 70461a00-bad3-432d-a2b4-3fe0d5dc0817
-heart_mask = create_circle_mask(dcm_arr[:, :, 3], centroids, 100);
+heart_mask = create_circle_mask(dcm_arr[:, :, 3], centroids, heart_rad);
 
 # ╔═╡ 33eed811-b9a5-4589-8f6c-721d48ef8c9e
 md"""
@@ -570,7 +579,7 @@ a_agatston, a_volume, a_mass = score(overlayed_mask, pixel_size, mass_cal_factor
 # ╠═b38f92ac-ad86-404b-bf33-118d7f886b36
 # ╠═33eae10c-3777-4c53-8245-72932a28069d
 # ╠═231939ec-ee93-4363-a962-ac7517b0bb0a
-# ╠═3ad9eb7c-9241-4a06-8308-b6ba33aa492f
+# ╟─3ad9eb7c-9241-4a06-8308-b6ba33aa492f
 # ╠═c7cd528e-8ee0-47ee-aaf6-47158532e2ae
 # ╟─6321ab34-df67-410a-8776-850b4b456058
 # ╟─3fd05c3f-eb99-4d26-8b55-eb96b1513bc1
@@ -582,6 +591,8 @@ a_agatston, a_volume, a_mass = score(overlayed_mask, pixel_size, mass_cal_factor
 # ╠═39a8257c-2664-4779-ba48-6835fbb7b290
 # ╠═23a3c740-6477-42b4-aa4e-990130b2bf64
 # ╠═ddcf30bb-0db0-4c1c-bec0-c1eec9289bba
+# ╟─020c0257-1d58-4f26-aefb-b019024b4629
+# ╠═d77655b5-2249-4fe7-91c5-5f2bc69f2aba
 # ╠═70461a00-bad3-432d-a2b4-3fe0d5dc0817
 # ╟─33eed811-b9a5-4589-8f6c-721d48ef8c9e
 # ╟─7773815d-c91d-49a4-a0dd-46128ee6b28b

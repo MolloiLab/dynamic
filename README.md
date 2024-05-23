@@ -32,7 +32,7 @@ The phantom is a dynamic phantom so the scans are all either 0, 60, or 90 beats 
 | Material                | Densities:  | Diameters:                     |                            |                     |                         |                     |
 |-------------------------|-------------|--------------------------------|----------------------------|---------------------|-------------------------|---------------------|
 |                         | 50 mg/cc    | 1.2mm Dark pink with a cream   | 3.0mmDark pink with a cream| 5.0mm               |                         |                     |
-|                         |             | Ø1.2mm core (code A)           | Ø3 mm core (code B)        | Cream (code G)      |                         |                     |
+|                         |             | Ø1.2mm core (code A)           | Ø3 mm core (code B)        | Cream (code C)      |                         |                     |
 | Hydroxyapatite          |             | Batch:                         | Qty:                       | Batch:              | Qty: 6                  |                     |
 |                         | 100 mg/cc   | 1.2mm Dark pink with a cream   | 3.0mm Dark pink with a cream| 5.0mm Cream (lighter|                         |                     |
 | (calcification targets) |             | Ø1.2mm core (code D)           | Ø3 mm core (code E)         | than for 50mg/cc)   |                         |                     |

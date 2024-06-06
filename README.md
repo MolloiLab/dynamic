@@ -29,7 +29,7 @@ The phantom is a dynamic phantom so the scans are all either 0, 60, or 90 beats 
 
 ### General Table of Inserts
 #### Not specific to this study but the overall CIRS phantom
-See [embed]https://github.com/MolloiLab/dynamic/blob/main/ENG14920100%20Targets%20(1).pdf[/embed]
+See https://github.com/MolloiLab/dynamic/blob/main/ENG14920100%20Targets%20(1).pdf
 
 ## DrWatson.jl stuff
 This code base is using the [Julia Language](https://julialang.org/) and

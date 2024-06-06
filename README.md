@@ -29,39 +29,7 @@ The phantom is a dynamic phantom so the scans are all either 0, 60, or 90 beats 
 
 ### General Table of Inserts
 #### Not specific to this study but the overall CIRS phantom
-| Material                | Densities:  | Diameters:                     |                            |                     |                         |                     |
-|-------------------------|-------------|--------------------------------|----------------------------|---------------------|-------------------------|---------------------|
-|                         | 50 mg/cc    | 1.2mm Dark pink with a cream   | 3.0mmDark pink with a cream| 5.0mm               |                         |                     |
-|                         |             | Ø1.2mm core (code A)           | Ø3 mm core (code B)        | Cream (code C)      |                         |                     |
-| Hydroxyapatite          |             | Batch:                         | Qty:                       | Batch:              | Qty: 6                  |                     |
-|                         | 100 mg/cc   | 1.2mm Dark pink with a cream   | 3.0mm Dark pink with a cream| 5.0mm Cream (lighter|                         |                     |
-| (calcification targets) |             | Ø1.2mm core (code D)           | Ø3 mm core (code E)         | than for 50mg/cc)   |                         |                     |
-|                         |             | Batch:                         | Qty:                       | (code F)            |                         |                     |
-| Background Batch:       |             |                                |                            | Batch:              | Qty: 4                  |                     |
-|                         | 250 mg/cc   | 1.2mm Dark pink with a cream   | 3.0mm Dark pink with a cream| 5.0mm Cream (lighter|                         |                     |
-|                         |             | Ø1.2mm core (code H)           | Ø3 mm core (code I)         | than for 100mg/cc)  |                         |                     |
-|                         |             | Batch:                         | Qty:                       | (code K)            |                         |                     |
-|                         |             |                                |                            | Batch:              | Qty: 4                  |                     |
-|                         | 400 mg/cc   | 1.2mm Dark pink with a cream   | 3.0mm Dark pink with a cream| 5.0mm Cream (lighter|                         |                     |
-|                         |             | Ø1.2mm core (code L)           | Ø3 mm core (code M)         | than for 250mg/cc)  |                         |                     |
-|                         |             | Batch:                         | Qty: 6                     | (code N)            |                         |                     |
-|                         |             |                                |                            | Batch:              | Qty: 4                  |                     |
-|                         | 0. 5 mg/cc  | 1.2mm Dark pink with a cream   | 3.0mm Dark pink with a cream| 5.0mm Translucent   |                         |                     |
-|                         |             | Ø1.2mm core (code O)           | Ø3mm core (code P)          | red                 |                         |                     |
-|                         |             | Batch:                         | Qty: 6                     | (code R)            |                         |                     |
-| Iodine                  | 1.0 mg/cc   | 1.2mm Dark pink with a cream   | 3.0mm Dark pink with a cream| Batch:              | Qty: 6                  |                     |
-|                         |             | Ø1.2mm core (code S)           | Ø3mm core (code T)          | 5.0mm Translucent   |                         |                     |
-| Background Batch:       |             | Batch:                         | Qty: 6                     | blue with a green   |                         |                     |
-|                         |             |                                |                            | nuance (code U)     |                         |                     |
-|                         | 5.0 mg/cc   | 1.2mm Dark pink with a cream   | 3.0mm Dark pink with a cream| Batch:              | Qty: 6                  |                     |
-|                         |             | Ø1.2mm core (code V)           | Ø3mm core (code X)          | 5.0mm Translucent   |                         |                     |
-|                         |             | Batch:                         | Qty: 3                     | Yellow (code Y)     |                         |                     |
-|                         |             |                                |                            | Batch:              | Qty: 6                  |                     |
-|                         | 10 mg/cc    | 1.2mm Dark pink with a cream   | 3.0mm Dark pink with a cream| 5.0mm Translucent   |                         |                     |
-|                         |             | Ø1.2mm core (code Z)           | Ø3mm core (code 2)          | purple              |                         |                     |
-|                         |             | Batch:                         | Qty: 6                     | (code 8)            |                         |                     |
-|                         |             |                                |                            | Batch:              | Qty: 6                  |                     |
-| Solid Background Insert | Batch       |                                | Qty: 12                    |                     |                         |                     |
+See [embed]https://github.com/MolloiLab/dynamic/blob/main/ENG14920100%20Targets%20(1).pdf[/embed]
 
 ## DrWatson.jl stuff
 This code base is using the [Julia Language](https://julialang.org/) and
